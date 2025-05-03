@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  traced-viewer:
+    build: .
+    container_name: traced-viewer
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/data
+      - ${TRACED_DB_PATH:-./traces.db}:/data/traces.db
+    environment:
+      - TRACED_DB_PATH=/data/traces.db
+      - FLASK_APP=app
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-default_dev_key_change_in_production}
+    restart: unless-stopped

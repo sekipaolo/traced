@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Traced Viewer - Traces{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">Traces</h1>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="text" id="search-input" class="form-control" placeholder="Search traces...">
+                        <button class="btn btn-outline-secondary" type="button" id="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="traces-container">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Format timestamp for display
+    function formatTimestamp(timestampString) {
+        const date = new Date(timestampString);
+        return date.toLocaleString();
+    }
+    
+    // Render trace list
+    function renderTraceList(traces) {
+        const tracesContainer = document.getElementById('traces-container');
+        
+        if (traces.length === 0) {
+            tracesContainer.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No traces found. Start using the traced package to generate traces.
+                </div>
+            `;
+            return;
+        }
+        
+        // Create HTML table
+        let html = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%">Root Agent</th>
+                            <th style="width: 15%">Trace ID</th>
+                            <th style="width: 20%">Start Time</th>
+                            <th style="width: 15%">Duration</th>
+                            <th style="width: 10%">Executions</th>
+                            <th style="width: 10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        traces.forEach(trace => {
+            html += `
+                <tr class="trace-list-item" data-trace-id="${trace.trace_id}">
+                    <td>
+                        <strong>${trace.root_agent}</strong>
+                    </td>
+                    <td class="text-monospace">
+                        <span class="text-muted">${trace.trace_id.substring(0, 8)}...</span>
+                    </td>
+                    <td>${trace.formatted_start_time}</td>
+                    <td>${trace.formatted_duration}</td>
+                    <td><span class="badge bg-primary">${trace.execution_count}</span></td>
+                    <td>
+                        <a href="/traces/${trace.trace_id}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        tracesContainer.innerHTML = html;
+        
+        // Add click event listeners
+        document.querySelectorAll('.trace-list-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const traceId = this.dataset.traceId;
+                window.location.href = `/traces/${traceId}`;
+            });
+        });
+    }
+    
+    // Load traces
+    function loadTraces() {
+        showLoading('traces-container');
+        
+        fetch('/api/traces')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(traces => {
+                renderTraceList(traces);
+            })
+            .catch(error => {
+                console.error('Error loading traces:', error);
+                showError('traces-container', `Error loading traces: ${error.message}`);
+            });
+    }
+    
+    // Filter traces
+    function filterTraces(searchTerm) {
+        searchTerm = searchTerm.toLowerCase();
+        
+        fetch('/api/traces')
+            .then(response => response.json())
+            .then(traces => {
+                const filteredTraces = traces.filter(trace => {
+                    // Search by root agent, trace ID, or formatted start time
+                    return (
+                        trace.root_agent.toLowerCase().includes(searchTerm) ||
+                        trace.trace_id.toLowerCase().includes(searchTerm) ||
+                        trace.formatted_start_time.toLowerCase().includes(searchTerm)
+                    );
+                });
+                
+                renderTraceList(filteredTraces);
+            })
+            .catch(error => {
+                console.error('Error filtering traces:', error);
+                showError('traces-container', `Error filtering traces: ${error.message}`);
+            });
+    }
+    
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial data
+        loadTraces();
+        
+        // Set up search functionality
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        
+        searchButton.addEventListener('click', function() {
+            filterTraces(searchInput.value);
+        });
+        
+        searchInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                filterTraces(this.value);
+            }
+        });
+    });
+</script>
+{% endblock %}

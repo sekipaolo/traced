@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traced"
+version = "0.1.0"
+description = "A simple but powerful tracing library for Python applications"
+readme = "README.md"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["tracing", "monitoring", "logging", "debugging"]
+requires-python = ">=3.7"
+dependencies = []
+
+[project.optional-dependencies]
+mongodb = ["pymongo>=3.12.0"]
+sqlite = []  # No additional dependencies needed for SQLite
+all = ["pymongo>=3.12.0"]
+
+[project.urls]
+Homepage = "https://github.com/sekipaolo/traced"
+Issues = "https://github.com/sekipaolo/traced/issues"
+Documentation = "https://github.com/sekipaolo/traced#readme"
+
+[tool.black]
+line-length = 88
+target-version = ["py37", "py38", "py39", "py310", "py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
